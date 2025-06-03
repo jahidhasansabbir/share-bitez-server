@@ -19,6 +19,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const foodColl = client.db("food-share").collection("foods");
+    const RequestColl = client.db("food-share").collection('requested-food')
 
     app.get("/foods", async (req, res) => {
       const result = await foodColl
@@ -46,18 +47,21 @@ async function run() {
       const result = await foodColl.findOne(query);
       res.send(result);
     });
+
     app.patch("/food/:id", async (req, res) => {
       const id = req.params.id;
-      const { foodStatus } = req.body;
+      const { foodStatus, requestedDate } = req.body;
       const query = { _id: new ObjectId(id) };
       const update = {
         $set: {
           foodStatus,
+          requestedDate
         },
       };
       const result = await foodColl.updateOne(query, update);
       res.send(result);
     });
+
     app.patch("/update/:id", async (req, res) => {
       const {
         foodName,
@@ -82,7 +86,20 @@ async function run() {
       const result = await foodColl.updateOne(query, update);
       res.send(result)
     });
-    
+
+    app.delete('/delete/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await foodColl.deleteOne(query);
+      res.send(result);
+    })
+
+    app.get('/requested-food', async(req, res)=>{
+      const result = await foodColl.find({ "requestedDate": { $exists: true } }).toArray();
+      res.send(result);
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
