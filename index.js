@@ -98,6 +98,10 @@ async function run() {
       const result = await foodColl.find({ "requestedDate": { $exists: true } }).toArray();
       res.send(result);
     })
+    app.get('/requested-food', async(req, res)=>{
+      const result = await foodColl.find({ "requestedDate": { $exists: true } }).toArray();
+      res.send(result);
+    })
 
 
 
