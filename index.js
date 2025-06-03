@@ -1,76 +1,102 @@
-const express = require('express');
+const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const cors = require('cors');
+const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 
+const uri = process.env.URI;
 
-
-
-const uri = process.env.URI
-
-console.log(process.env.URI);
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 async function run() {
   try {
+    const foodColl = client.db("food-share").collection("foods");
 
-    const foodColl = client.db('food-share').collection('foods');
-
-    app.get('/foods', async(req, res)=>{
-        const result = await foodColl.find().sort({foodQuantity: -1}).limit(6).toArray();;
-        res.send(result);
-    })
-    app.get('/available-foods', async(req, res)=>{
-        const result = await foodColl.find({foodStatus: "available"}).sort({ expireDate: 1 }).toArray()
-        res.send(result)
-    })
-    app.post('/foods', async(req, res)=>{
-        const data = req.body;
-        const result = await foodColl.insertOne(data);
-        res.send(result)
-    })
-    app.get('/food/:id', async(req, res)=>{
+    app.get("/foods", async (req, res) => {
+      const result = await foodColl
+        .find()
+        .sort({ foodQuantity: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+    app.get("/available-foods", async (req, res) => {
+      const result = await foodColl
+        .find({ foodStatus: "available" })
+        .sort({ expireDate: 1 })
+        .toArray();
+      res.send(result);
+    });
+    app.post("/foods", async (req, res) => {
+      const data = req.body;
+      const result = await foodColl.insertOne(data);
+      res.send(result);
+    });
+    app.get("/food/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await foodColl.findOne(query);
       res.send(result);
-    })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    });
+    app.patch("/food/:id", async (req, res) => {
+      const id = req.params.id;
+      const { foodStatus } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          foodStatus,
+        },
+      };
+      const result = await foodColl.updateOne(query, update);
+      res.send(result);
+    });
+    app.patch("/update/:id", async (req, res) => {
+      const {
+        foodName,
+        foodImage,
+        foodQuantity,
+        pickupLocation,
+        expireDate,
+        additionalNotes,
+      } = req.body;
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          foodName,
+          foodImage,
+          foodQuantity,
+          pickupLocation,
+          expireDate,
+          additionalNotes,
+        },
+      };
+      const result = await foodColl.updateOne(query, update);
+      res.send(result)
+    });
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
   }
 }
 run();
 
-
-app.get('/', (req, res)=>{
-    res.send('Server is running...')
-})
-app.listen(port, ()=>{
-    console.log('The server is running on port ',port);
-})
+app.get("/", (req, res) => {
+  res.send("Server is running...");
+});
+app.listen(port, () => {
+  console.log("The server is running on port ", port);
+});
