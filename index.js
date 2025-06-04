@@ -134,7 +134,7 @@ async function run() {
     });
 
     // manage my food
-    app.get("/manage-my-food/:email",  async (req, res) => {
+    app.get("/manage-my-food/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       if (email != req.decoded.email) {
         return res.status(403).send({ message: "Forbidden access" });
